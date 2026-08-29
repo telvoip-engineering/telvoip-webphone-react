@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, mock, test } from "bun:test";
+import pkg from "../../package.json";
 
 type PendingWasmLoad = {
   resolve: (value: ArrayBuffer) => void;
@@ -130,7 +131,34 @@ const {
   disposeNoiseSuppression,
   disposeNoiseSuppressionForStream,
   preloadNoiseSuppression,
+  resolveNoiseSuppressionAssetBaseUrl,
 } = await import("./noiseSuppression");
+
+describe("resolveNoiseSuppressionAssetBaseUrl", () => {
+  test("defaults to a jsdelivr URL pinned to the installed package name and version", () => {
+    expect(resolveNoiseSuppressionAssetBaseUrl()).toBe(
+      `https://cdn.jsdelivr.net/npm/${pkg.name}@${pkg.version}/dist/noise-assets`
+    );
+  });
+
+  test("uses an override base URL when provided", () => {
+    expect(resolveNoiseSuppressionAssetBaseUrl("/vendor/webphone-noise")).toBe(
+      "/vendor/webphone-noise"
+    );
+  });
+
+  test("trims a trailing slash from an override so filenames join cleanly", () => {
+    expect(resolveNoiseSuppressionAssetBaseUrl("/vendor/webphone-noise/")).toBe(
+      "/vendor/webphone-noise"
+    );
+  });
+
+  test("ignores a blank/whitespace-only override and falls back to the default", () => {
+    expect(resolveNoiseSuppressionAssetBaseUrl("   ")).toBe(
+      `https://cdn.jsdelivr.net/npm/${pkg.name}@${pkg.version}/dist/noise-assets`
+    );
+  });
+});
 
 const waitForWasmLoads = async (count: number) => {
   for (let attempt = 0; attempt < 50 && pendingWasmLoads.length < count; attempt += 1) {

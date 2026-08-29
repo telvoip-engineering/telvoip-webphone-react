@@ -120,6 +120,12 @@ export interface UseSIPClientOptions {
   sessionTimersForceRefresher?: boolean;
   /** Enable the RNNoise noise-suppression filter on the microphone. Default true. */
   noiseSuppressionEnabled?: boolean;
+  /**
+   * Override where the RNNoise WASM/worklet assets load from. Defaults to a
+   * jsdelivr URL pinned to this package's installed version. Only consulted
+   * on the first load per page - see resolveNoiseSuppressionAssetBaseUrl.
+   */
+  noiseSuppressionAssetBaseUrl?: string;
 }
 
 // --- Device and diagnostics types ---
@@ -954,6 +960,7 @@ export default function useSIPClient(
     sessionTimersRefreshMethod: sessionTimersRefreshMethodOption,
     sessionTimersForceRefresher: sessionTimersForceRefresherOption,
     noiseSuppressionEnabled: noiseSuppressionEnabledOption,
+    noiseSuppressionAssetBaseUrl,
   } = options;
   // Frozen at first mount, matching the original module-level-constant
   // semantics (these feed UA/session config built once per registration
@@ -972,6 +979,10 @@ export default function useSIPClient(
   ).current;
   const SESSION_TIMERS_FORCE_REFRESHER = useRef(sessionTimersForceRefresherOption ?? false).current;
   const CUSTOM_NOISE_SUPPRESSION_ALLOWED = useRef(noiseSuppressionEnabledOption ?? true).current;
+  // preloadNoiseSuppression's own module-level cache only honors the first
+  // call's base URL per page load anyway (see its docstring) - freezing here
+  // just keeps this option consistent with its siblings above.
+  const NOISE_SUPPRESSION_ASSET_BASE_URL = useRef(noiseSuppressionAssetBaseUrl).current;
   const uaRef = useRef<JsSIPUA | null>(null);
   const iceServersRef = useRef(iceServers);
   const iceTransportPolicyRef = useRef(iceTransportPolicy);
@@ -1169,7 +1180,7 @@ export default function useSIPClient(
       const requestedCustomNoiseSuppression =
         noiseSuppressionEnabledRef.current &&
         CUSTOM_NOISE_SUPPRESSION_ALLOWED &&
-        (await preloadNoiseSuppression()).ok;
+        (await preloadNoiseSuppression(NOISE_SUPPRESSION_ASSET_BASE_URL)).ok;
       const getStream = (targetDeviceId: string | null, useCustomSuppression: boolean) =>
         navigator.mediaDevices.getUserMedia({
           audio: buildSpeechAudioConstraints(targetDeviceId, useCustomSuppression),
@@ -1276,7 +1287,7 @@ export default function useSIPClient(
         throw err;
       }
     },
-    [CUSTOM_NOISE_SUPPRESSION_ALLOWED]
+    [CUSTOM_NOISE_SUPPRESSION_ALLOWED, NOISE_SUPPRESSION_ASSET_BASE_URL]
   );
 
   const replaceSessionInputTrack = useCallback(

@@ -5,11 +5,40 @@
 // the server render of any page that pulls in the webphone context.
 import type { RnnoiseWorkletNode } from "@sapphi-red/web-noise-suppressor";
 
-const WORKLET_URL = "/webphone-noise/rnnoiseWorklet.js";
-const WASM_URL = "/webphone-noise/rnnoise.wasm";
-const WASM_SIMD_URL = "/webphone-noise/rnnoise_simd.wasm";
+const ASSET_FILENAMES = {
+  worklet: "rnnoiseWorklet.js",
+  wasm: "rnnoise.wasm",
+  wasmSimd: "rnnoise_simd.wasm",
+} as const;
 const MAX_CHANNELS = 2;
 const LOAD_TIMEOUT_MS = 4_000;
+
+/**
+ * Resolves where the RNNoise WASM/worklet assets load from. Defaults to a
+ * jsdelivr URL pinned to *this exact installed version* (jsdelivr mirrors
+ * any published npm package's tarball contents automatically - nothing to
+ * host or configure) so a consumer never has to think about it. Pass
+ * `overrideBaseUrl` (e.g. a same-origin path) to self-host instead, for
+ * offline/air-gapped deployments or CSP policies that block third-party
+ * script/wasm origins - copy dist/noise-assets/* from this package to that
+ * path (the two LICENSE files are attribution-only, not fetched at runtime,
+ * but should still be included in any self-hosted copy for compliance).
+ */
+export const resolveNoiseSuppressionAssetBaseUrl = (overrideBaseUrl?: string): string => {
+  if (overrideBaseUrl && overrideBaseUrl.trim()) {
+    return overrideBaseUrl.trim().replace(/\/+$/, "");
+  }
+  return `https://cdn.jsdelivr.net/npm/${__PACKAGE_NAME__}@${__PACKAGE_VERSION__}/dist/noise-assets`;
+};
+
+const resolveAssetUrls = (overrideBaseUrl?: string) => {
+  const base = resolveNoiseSuppressionAssetBaseUrl(overrideBaseUrl);
+  return {
+    workletUrl: `${base}/${ASSET_FILENAMES.worklet}`,
+    wasmUrl: `${base}/${ASSET_FILENAMES.wasm}`,
+    wasmSimdUrl: `${base}/${ASSET_FILENAMES.wasmSimd}`,
+  };
+};
 
 type NoiseSuppressorModule = typeof import("@sapphi-red/web-noise-suppressor");
 
@@ -71,11 +100,22 @@ export const isNoiseSuppressionSupported = (): boolean =>
   typeof navigator !== "undefined" &&
   Boolean(navigator.mediaDevices?.getUserMedia);
 
-export const preloadNoiseSuppression = (): Promise<NoiseSuppressionLoadResult> => {
+/**
+ * @param assetBaseUrl Override for where the WASM/worklet assets load from
+ *   (see resolveNoiseSuppressionAssetBaseUrl). Only consulted on the first
+ *   call per page load - like the rest of this module, loading is a
+ *   singleton (one shared AudioContext/worklet), so the base URL is fixed
+ *   once loading starts and isn't reconfigurable mid-session.
+ */
+export const preloadNoiseSuppression = (
+  assetBaseUrl?: string
+): Promise<NoiseSuppressionLoadResult> => {
   if (!isNoiseSuppressionSupported()) {
     return Promise.resolve({ ok: false, reason: "AudioWorklet not supported" });
   }
   if (loadPromise) return loadPromise;
+
+  const { workletUrl, wasmUrl, wasmSimdUrl } = resolveAssetUrls(assetBaseUrl);
 
   const context = getContext();
   if (!context) {
@@ -107,7 +147,7 @@ export const preloadNoiseSuppression = (): Promise<NoiseSuppressionLoadResult> =
 
     (async () => {
       try {
-        await context.audioWorklet.addModule(WORKLET_URL);
+        await context.audioWorklet.addModule(workletUrl);
         if (!ownsLoad()) {
           finish({ ok: false, reason: "Noise suppression load superseded" });
           return;
@@ -117,7 +157,7 @@ export const preloadNoiseSuppression = (): Promise<NoiseSuppressionLoadResult> =
           finish({ ok: false, reason: "Noise suppression load superseded" });
           return;
         }
-        const loadedWasmBinary = await loadRnnoise({ url: WASM_URL, simdUrl: WASM_SIMD_URL });
+        const loadedWasmBinary = await loadRnnoise({ url: wasmUrl, simdUrl: wasmSimdUrl });
         if (!ownsLoad()) {
           finish({ ok: false, reason: "Noise suppression load superseded" });
           return;
@@ -137,6 +177,13 @@ export const preloadNoiseSuppression = (): Promise<NoiseSuppressionLoadResult> =
           loadPromise = null;
           loadOwner = null;
         }
+        console.warn(
+          "[webphone-react] Noise suppression failed to load from",
+          `${workletUrl.replace(/\/[^/]+$/, "")}.`,
+          "Calls continue without it. If this is a CSP or offline environment, self-host the",
+          "assets from dist/noise-assets/ and pass noiseSuppression.assetBaseUrl.",
+          error
+        );
         finish({
           ok: false,
           reason: error instanceof Error ? error.message : "Noise suppression failed to load",

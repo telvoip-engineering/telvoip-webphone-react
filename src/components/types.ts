@@ -28,3 +28,19 @@ export interface WrapUpCallSummary {
   direction?: "incoming" | "outgoing" | null;
   durationSeconds?: number;
 }
+
+export interface DialerProps {
+  /** Set to false for a fixed-corner pill instead of a draggable one. Default true. */
+  draggable?: boolean;
+  corner?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  /** Override any subset of the UI's default (English) strings. */
+  labels?: Partial<import("./labels").DialerLabels>;
+  /**
+   * Optional directory search for the transfer pad - see TransferPad's
+   * matching props. Omit for a plain numeric transfer pad.
+   */
+  onTransferSearch?: (query: string) => void;
+  transferCandidates?: TransferTarget[];
+  transferCandidatesLoading?: boolean;
+  className?: string;
+}

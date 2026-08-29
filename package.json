@@ -1,6 +1,7 @@
 {
   "name": "@telvoip/webphone-react",
   "version": "0.1.0",
+  "workspaces": ["example"],
   "description": "Portable React hook and drop-in Dialer component for WebRTC/SIP softphones, built on JsSIP.",
   "type": "module",
   "license": "MIT",

@@ -1,0 +1,17 @@
+/*
+ * Public theming contract. Consumers may override any of these custom
+ * properties on `.twp-root` (or an ancestor of it) to reskin the Dialer
+ * without needing Tailwind or forking the package. Defaults below give a
+ * usable, neutral out-of-the-box appearance.
+ */
+.twp-root {
+  --twp-color-primary: #2563eb;
+  --twp-color-primary-contrast: #ffffff;
+  --twp-color-danger: #dc2626;
+  --twp-color-surface: #ffffff;
+  --twp-color-surface-muted: #f3f4f6;
+  --twp-color-border: #e5e7eb;
+  --twp-color-text-primary: #111827;
+  --twp-color-text-secondary: #6b7280;
+  --twp-radius: 12px;
+}

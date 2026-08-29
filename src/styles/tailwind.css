@@ -1,0 +1,5 @@
+/* Build-time entry only - compiled to dist/style.css, never imported by src/index.ts. */
+@import "../theme/tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -1,5 +1,42 @@
-// Public entry point. Filled in incrementally as the engine (src/core),
-// context layer (src/context), noise-suppression (src/noise-suppression),
-// and UI (src/components) are ported/built out. See the repo README's
-// roadmap section for current status.
-export const PACKAGE_NAME = "@telvoip/webphone-react";
+// Public entry point.
+//
+// Primitive/headless exports (this file, so far): the JsSIP engine hook and
+// the Context/Provider layer built on it - enough to drive telephony
+// entirely from your own UI. `<WebphoneProvider>` / `<Dialer />` and the
+// individually-exported UI primitives (drop-in, batteries-included path)
+// land in a later phase; see the README roadmap for current status.
+
+export { default as useSIPClient } from "./core/useSIPClient";
+export type {
+  AvailableDevice,
+  AvailableDevices,
+  CurrentCallState,
+  DiagnosticsState,
+  SelfTestState,
+  SipCallStateValue,
+  SipClientConfig,
+  SipRemoteIdentity,
+  UseSIPClientOptions,
+  UseSIPClientReturn,
+} from "./core/useSIPClient";
+
+export { SipProvider, useSip, useSipActions, normalizeCredentials } from "./context/SipContext";
+export type {
+  NormalizedSipCredentials,
+  SipActions,
+  SipCallStatus,
+  SipContextValue,
+  SipCredentialsInput,
+  SipProviderProps,
+  SipRemoteIdentity as SipContextRemoteIdentity,
+  SipState,
+} from "./context/SipContext";
+
+export {
+  getIncomingRingtonePreset,
+  getSoundPatternDurationMs,
+  INCOMING_RINGTONE_PRESETS,
+  readWebphoneSoundPreferences,
+  writeWebphoneSoundPreferences,
+} from "./core/webphoneSounds";
+export type { WebphoneRingtoneId, WebphoneSoundPreferences } from "./core/webphoneSounds";

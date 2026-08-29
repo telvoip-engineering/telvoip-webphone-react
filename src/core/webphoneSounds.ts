@@ -28,6 +28,14 @@ export interface SoundPattern {
 
 export interface IncomingRingtonePreset {
   id: WebphoneRingtoneId;
+  /** Display name; the UI's own default (a consumer may still relabel via props). */
+  name: string;
+  /**
+   * Iconify icon name from the source this was ported from - kept as
+   * metadata for consumers who have their own icon system, but unused by
+   * this package's own UI (which ships a small dependency-free icon set
+   * instead of an Iconify dependency).
+   */
   icon: string;
   accentClass: string;
   pattern: SoundPattern;
@@ -46,6 +54,7 @@ export const WEBPHONE_SOUND_PREF_STORAGE_KEY = "telvoip:webphone:soundPreference
 export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   {
     id: "classic",
+    name: "Classic",
     icon: "mdi:bell-ring-outline",
     accentClass: "from-orange-500 to-amber-400",
     pattern: {
@@ -56,6 +65,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "northAmerica",
+    name: "North America",
     icon: "mdi:phone-classic",
     accentClass: "from-blue-500 to-cyan-400",
     pattern: {
@@ -66,6 +76,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "ukDouble",
+    name: "UK Double Ring",
     icon: "mdi:record-circle-outline",
     accentClass: "from-violet-500 to-fuchsia-400",
     pattern: {
@@ -79,6 +90,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "europe",
+    name: "Europe",
     icon: "mdi:deskphone",
     accentClass: "from-emerald-500 to-teal-400",
     pattern: {
@@ -89,6 +101,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "deskBell",
+    name: "Desk Bell",
     icon: "mdi:bell-alert-outline",
     accentClass: "from-yellow-500 to-orange-400",
     pattern: {
@@ -103,6 +116,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "callCenter",
+    name: "Call Center",
     icon: "mdi:headset",
     accentClass: "from-orange-600 to-red-500",
     pattern: {
@@ -117,6 +131,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "pulse",
+    name: "Pulse",
     icon: "solar:pulse-2-linear",
     accentClass: "from-sky-500 to-blue-400",
     pattern: {
@@ -131,6 +146,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "urgent",
+    name: "Urgent",
     icon: "mdi:alarm-light-outline",
     accentClass: "from-rose-500 to-orange-400",
     pattern: {
@@ -145,6 +161,7 @@ export const INCOMING_RINGTONE_PRESETS: IncomingRingtonePreset[] = [
   },
   {
     id: "soft",
+    name: "Soft",
     icon: "solar:bell-bing-linear",
     accentClass: "from-slate-500 to-sky-400",
     pattern: {

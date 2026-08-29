@@ -7,6 +7,7 @@
 .twp-root {
   --twp-color-primary: #2563eb;
   --twp-color-primary-contrast: #ffffff;
+  --twp-color-secondary: #0891b2;
   --twp-color-danger: #dc2626;
   --twp-color-surface: #ffffff;
   --twp-color-surface-muted: #f3f4f6;

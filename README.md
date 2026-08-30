@@ -1,8 +1,8 @@
 # @telvoip/webphone-react
 
 A portable React hook and drop-in `<Dialer />` component for WebRTC/SIP softphones, built on
-[JsSIP](https://jssip.net). Extracted from Telvoip's own client dashboard, so it's the same
-engine handling real production calls — packaged for any React project to use.
+[JsSIP](https://jssip.net) and tested against real production call traffic — packaged for any
+React project to use.
 
 > **Status: pre-release.** The engine and UI are built and wired together; not yet published to
 > npm. See the roadmap below.
@@ -19,9 +19,8 @@ engine handling real production calls — packaged for any React project to use.
    you don't want React context at all, or need more than one independent SIP client in the
    same app.
 
-None of the three fetches credentials for you — you provide SIP credentials and a WSS URL (e.g.
-from your own backend, or from Telvoip's `GET /api/developers/voice/credentials` endpoint if
-you're a Telvoip Developer-kind account).
+None of the three fetches credentials for you — you provide SIP credentials and a WSS URL from
+your own backend or SIP/PBX provider.
 
 ## Install
 
@@ -40,7 +39,7 @@ function App() {
         sipUsername: "1001",
         sipPassword: "...",
         sipDomain: "tenant.example.com",
-        sipWsUrl: "wss://app.telvoip.io:7443",
+        sipWsUrl: "wss://sip.example.com:7443",
       }}
     >
       <YourApp />
@@ -111,7 +110,7 @@ export default function App() {
         sipUsername: "1001",
         sipPassword: "...",
         sipDomain: "tenant.example.com",
-        sipWsUrl: "wss://app.telvoip.io:7443",
+        sipWsUrl: "wss://sip.example.com:7443",
       }}
     >
       <Softphone />
@@ -193,7 +192,7 @@ function Softphone() {
     sipUsername: "1001",
     sipPassword: "...",
     sipDomain: "tenant.example.com",
-    sipWsUrl: "wss://app.telvoip.io:7443",
+    sipWsUrl: "wss://sip.example.com:7443",
   });
 
   const sip = useSIPClient(config ?? {}, {

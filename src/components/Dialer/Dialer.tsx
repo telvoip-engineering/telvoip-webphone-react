@@ -336,15 +336,21 @@ export default function Dialer({
 
       {state && state.wrapUpRemainingSeconds > 0
         ? createPortal(
-            <div className="fixed bottom-4 right-4 z-[22001]">
-              <WrapUpCard
-                remainingSeconds={state.wrapUpRemainingSeconds}
-                totalSeconds={state.wrapUpTotalSeconds}
-                extensionsLeft={state.wrapUpExtensionsLeft}
-                onSkip={() => actions?.skipWrapUp()}
-                onExtend={() => actions?.extendWrapUp()}
-                labels={labelsOverride}
-              />
+            // .twp-root ancestor required for the "fixed"/"bottom-4"/etc.
+            // utilities on this wrapper to actually apply - see
+            // DraggablePill.tsx's comment. (WrapUpCard's own twp-root only
+            // scopes *its own* classes, not this portal wrapper's.)
+            <div className="twp-root">
+              <div className="fixed bottom-4 right-4 z-[22001]">
+                <WrapUpCard
+                  remainingSeconds={state.wrapUpRemainingSeconds}
+                  totalSeconds={state.wrapUpTotalSeconds}
+                  extensionsLeft={state.wrapUpExtensionsLeft}
+                  onSkip={() => actions?.skipWrapUp()}
+                  onExtend={() => actions?.extendWrapUp()}
+                  labels={labelsOverride}
+                />
+              </div>
             </div>,
             document.body
           )

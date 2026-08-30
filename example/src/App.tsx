@@ -78,10 +78,15 @@ function CredentialsForm({ onSubmit }: { onSubmit: (creds: SipCredentialsInput) 
   );
 }
 
+type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+const CORNERS: Corner[] = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
 export default function App() {
   const [credentials, setCredentials] = useState<SipCredentialsInput | null>(
     ENV_DEFAULTS.sipUsername ? ENV_DEFAULTS : null
   );
+  const [draggable, setDraggable] = useState(true);
+  const [corner, setCorner] = useState<Corner>("bottom-right");
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa" }}>
@@ -93,6 +98,33 @@ export default function App() {
           The Dialer should float over this content without permanently covering it - drag it
           around to confirm.
         </p>
+
+        {credentials ? (
+          <div style={{ display: "flex", gap: 16, alignItems: "center", marginTop: 12 }}>
+            <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+              <input
+                type="checkbox"
+                checked={draggable}
+                onChange={(event) => setDraggable(event.target.checked)}
+              />
+              Draggable
+            </label>
+            <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+              {draggable ? "Starting corner" : "Fixed corner"}
+              <select
+                value={corner}
+                onChange={(event) => setCorner(event.target.value as Corner)}
+                style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #ccc" }}
+              >
+                {CORNERS.map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
       </div>
 
       {credentials ? (
@@ -100,7 +132,7 @@ export default function App() {
           credentials={credentials}
           onRegistrationFailed={(cause) => console.warn("Registration failed:", cause)}
         >
-          <Dialer />
+          <Dialer draggable={draggable} corner={corner} />
         </WebphoneProvider>
       ) : (
         <CredentialsForm onSubmit={setCredentials} />

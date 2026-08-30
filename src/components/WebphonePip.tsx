@@ -103,7 +103,11 @@ export const useWebphonePip = ({ callActive = false }: { callActive?: boolean } 
       });
       copyStylesInto(win);
       win.document.title = "Webphone";
-      win.document.body.className = "twp-root overflow-hidden bg-white";
+      // Just the .twp-root ancestor marker here - WebphonePipCard (the
+      // actual content rendered into this body) supplies its own
+      // background/overflow styling on its own root, correctly scoped as
+      // this element's descendant.
+      win.document.body.className = "twp-root";
       win.addEventListener("pagehide", () => {
         pipWindowRef.current = null;
         autoOpenedRef.current = false;
@@ -243,7 +247,13 @@ export const WebphonePipCard = ({ labels: labelsOverride }: WebphonePipCardProps
   })();
 
   return (
-    <div className="twp-root flex h-[100vh] w-full flex-col bg-white text-slate-800">
+    // Outer .twp-root is the required ancestor for important-selector
+    // scoping (see DraggablePill.tsx's comment) - redundant-but-harmless
+    // when this renders inside the PiP window body (which already sets
+    // twp-root itself), and required when this component is reused
+    // standalone outside that context.
+    <div className="twp-root">
+    <div className="flex h-[100vh] w-full flex-col bg-white text-slate-800">
       <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -347,6 +357,7 @@ export const WebphonePipCard = ({ labels: labelsOverride }: WebphonePipCardProps
           )}
         </div>
       ) : null}
+    </div>
     </div>
   );
 };

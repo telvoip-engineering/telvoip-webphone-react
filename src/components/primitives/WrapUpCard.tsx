@@ -36,10 +36,13 @@ export default function WrapUpCard({
   const DirectionIcon = callSummary?.direction === "incoming" ? PhoneIcon : PhoneHangupIcon;
 
   return (
+    // Outer .twp-root is the required ancestor for important-selector
+    // scoping - see DraggablePill.tsx's comment.
+    <div className="twp-root">
     <div
       role="dialog"
       aria-label={labels.wrapUpTitle}
-      className="twp-root flex w-[calc(100vw-32px)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_44px_rgba(15,23,42,0.22)]"
+      className="flex w-[calc(100vw-32px)] max-w-[380px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_44px_rgba(15,23,42,0.22)]"
     >
       <div className="flex items-center gap-2 px-3.5 py-2.5">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
@@ -96,6 +99,7 @@ export default function WrapUpCard({
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 }

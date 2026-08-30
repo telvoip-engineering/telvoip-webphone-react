@@ -49,10 +49,13 @@ export default function TransferPad({
   const showDirectory = Boolean(onSearch && onSelectCandidate);
 
   return createPortal(
-    <div
-      data-webphone-popup="transfer"
-      className="twp-root pointer-events-auto fixed inset-0 z-[22000] flex items-center justify-center bg-black/30 p-4"
-    >
+    // Outer .twp-root is the required ancestor for important-selector
+    // scoping - see DraggablePill.tsx's comment for why.
+    <div className="twp-root">
+      <div
+        data-webphone-popup="transfer"
+        className="pointer-events-auto fixed inset-0 z-[22000] flex items-center justify-center bg-black/30 p-4"
+      >
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.25)]">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-800">{labels.transfer}</h3>
@@ -161,6 +164,7 @@ export default function TransferPad({
           <TransferIcon size={16} />
           {transferLoading ? `${labels.transfer}…` : labels.transferSubmit}
         </button>
+      </div>
       </div>
     </div>,
     document.body

@@ -54,12 +54,17 @@ export default function DialPad({
   const labels = resolveLabels(labelsOverride);
 
   return createPortal(
-    <div
-      data-webphone-popup="dialpad"
-      className="twp-root pointer-events-auto fixed z-[22000] w-72 rounded-2xl border border-slate-200 bg-white p-3 text-slate-800 shadow-[0_24px_60px_rgba(15,23,42,0.25)] ring-1 ring-slate-100"
-      style={{ top, left }}
-    >
-      {inCallMode ? (
+    // Outer .twp-root is the required ancestor for the important-selector
+    // scoping (see DraggablePill.tsx's comment) - portaled content escapes
+    // whatever DOM tree it was called from, so it can't rely on an ancestor
+    // higher up the page providing this.
+    <div className="twp-root">
+      <div
+        data-webphone-popup="dialpad"
+        className="pointer-events-auto fixed z-[22000] w-72 rounded-2xl border border-slate-200 bg-white p-3 text-slate-800 shadow-[0_24px_60px_rgba(15,23,42,0.25)] ring-1 ring-slate-100"
+        style={{ top, left }}
+      >
+        {inCallMode ? (
         <div className="mb-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
           <span className="truncate">{dialInput || labels.dtmfPlaceholder}</span>
           {dialInput ? (
@@ -139,7 +144,8 @@ export default function DialPad({
           <PhoneIcon size={16} />
           {labels.call}
         </button>
-      )}
+        )}
+      </div>
     </div>,
     document.body
   );

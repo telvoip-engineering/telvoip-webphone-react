@@ -93,9 +93,15 @@ export default function AudioSettingsPanel({
   }, [ringtoneMenuOpen]);
 
   return (
+    // Outer .twp-root is the required ancestor for important-selector
+    // scoping - see DraggablePill.tsx's comment. A plain, unpositioned div
+    // doesn't create a new containing block, so the `absolute` child below
+    // still resolves against whatever positioned ancestor this component is
+    // placed inside (e.g. Dialer's own trigger wrapper).
+    <div className="twp-root">
     <div
       data-webphone-popup="audio"
-      className="twp-root absolute bottom-full left-1/2 top-auto z-[22000] mb-2 w-[420px] max-w-[calc(100vw-24px)] -translate-x-1/2 text-left sm:left-auto sm:right-0 sm:translate-x-0 md:bottom-auto md:top-full md:mb-0 md:mt-2"
+      className="absolute bottom-full left-1/2 top-auto z-[22000] mb-2 w-[420px] max-w-[calc(100vw-24px)] -translate-x-1/2 text-left sm:left-auto sm:right-0 sm:translate-x-0 md:bottom-auto md:top-full md:mb-0 md:mt-2"
     >
       <div className="overflow-visible rounded-[26px] border border-slate-200 bg-white p-3 shadow-[0_22px_56px_rgba(15,23,42,0.20)]">
         <div className="px-1 pb-3">
@@ -291,6 +297,7 @@ export default function AudioSettingsPanel({
           </p>
         ) : null}
       </div>
+    </div>
     </div>
   );
 }

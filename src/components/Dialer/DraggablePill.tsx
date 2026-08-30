@@ -174,20 +174,29 @@ export default function DraggablePill({
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className={`fixed z-[21999] ${draggable ? "touch-none select-none" : ""} ${className ?? ""}`}
-      style={{
-        left: position?.x ?? 0,
-        top: position?.y ?? 0,
-        visibility: position ? "visible" : "hidden",
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-    >
-      {children}
+    // Tailwind's `important: ".twp-root"` config generates a *descendant*
+    // selector (`.twp-root .fixed { ... !important }`) - it requires
+    // .twp-root to be an ancestor, not co-located on the same element as
+    // the utility classes it's scoping. This outer div exists purely to be
+    // that ancestor for the actual positioned/draggable div below (and for
+    // this component's own `className` prop, which may reference themed
+    // utility classes too).
+    <div className="twp-root">
+      <div
+        ref={containerRef}
+        className={`fixed z-[21999] ${draggable ? "touch-none select-none" : ""} ${className ?? ""}`}
+        style={{
+          left: position?.x ?? 0,
+          top: position?.y ?? 0,
+          visibility: position ? "visible" : "hidden",
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -87,9 +87,22 @@ export default function DraggablePill({
 
   // Initial placement: stored position if draggable and one exists, else the
   // requested corner. Re-runs if `draggable`/`corner` change at runtime.
+  //
+  // Deferred one frame: this measures the element's own rendered size
+  // (offsetWidth/offsetHeight) to compute where "the corner" actually is,
+  // and that measurement is only correct once the stylesheet defining this
+  // element's real layout (flex/padding/etc., all scoped under .twp-root)
+  // has actually been applied. A synchronous effect can in some setups run
+  // before an async-injected <style> tag takes effect, measuring the
+  // pre-CSS (e.g. full-width block) layout instead - producing a bogus
+  // "corner" position. requestAnimationFrame pushes the measurement past
+  // that window without a magic timeout.
   useEffect(() => {
-    const fraction = (draggable && readStoredFraction()) || CORNER_DEFAULTS[corner];
-    applyFraction(fraction);
+    const frame = requestAnimationFrame(() => {
+      const fraction = (draggable && readStoredFraction()) || CORNER_DEFAULTS[corner];
+      applyFraction(fraction);
+    });
+    return () => cancelAnimationFrame(frame);
   }, [draggable, corner, applyFraction]);
 
   // Re-clamp on resize so the pill can never end up stranded off-screen.

@@ -29,14 +29,19 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Build
+        run: bun run build
+
+      # See ci.yml's matching step - example/'s file:.. dependency hardlinks
+      # at install time, before dist/ exists on a fresh checkout.
+      - name: Re-link workspace after build
+        run: bun install --frozen-lockfile
+
       - name: Typecheck
         run: bun run typecheck
 
       - name: Unit tests
         run: bun run test
-
-      - name: Build
-        run: bun run build
 
       - name: Publish to npm
         run: npm publish --access public --provenance

@@ -22,14 +22,23 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Build
+        run: bun run build
+
+      # example/'s file:.. dependency on this package is hardlinked at
+      # install time - on the first install (above), dist/ doesn't exist
+      # yet, so the link has nothing to point at. Re-running install now
+      # that build has produced dist/ re-links it so example/src (which the
+      # root tsconfig includes) actually resolves the package during
+      # typecheck below.
+      - name: Re-link workspace after build
+        run: bun install --frozen-lockfile
+
       - name: Typecheck
         run: bun run typecheck
 
       - name: Unit tests
         run: bun run test
-
-      - name: Build
-        run: bun run build
 
   webrtc-smoke:
     runs-on: ubuntu-latest

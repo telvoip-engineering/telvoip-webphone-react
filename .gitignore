@@ -8,3 +8,4 @@ coverage/
 example/dist/
 playwright-report/
 test-results/
+.gstack/

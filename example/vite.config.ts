@@ -14,12 +14,16 @@ export default defineConfig({
     // dist/ output changes on every `bun run build` in the parent repo.
     // Vite's dependency pre-bundler caches node_modules packages in
     // node_modules/.vite/deps and, for a locally-linked package, often
-    // doesn't notice dist/ changed underneath it - excluding it here means
-    // Vite always reads the current dist/ files directly instead of a
-    // stale pre-bundled copy. If you still see old behavior after a fresh
-    // `bun run build` in the repo root, stop the dev server, delete
-    // example/node_modules/.vite, and restart - that clears any cache
-    // written before this config existed.
-    exclude: ["@telvoip/webphone-react"],
+    // doesn't notice dist/ changed underneath it.
+    //
+    // NOTE: `exclude: ["@telvoip/webphone-react"]` was tried here first and
+    // reverted - excluding the package also stops Vite's crawler from
+    // pre-bundling *its* transitive dependencies (jssip is CommonJS), which
+    // broke module resolution entirely (blank page). `force: true` instead:
+    // always re-optimize (including transitive deps) on every dev server
+    // start, which is enough for the actual workflow here (rebuild dist/,
+    // then restart the dev server - not hot-reloading a running server
+    // mid-rebuild) without touching what gets pre-bundled.
+    force: true,
   },
 });

@@ -89,8 +89,18 @@ useSIPClient(config, { noiseSuppressionAssetBaseUrl: "/vendor/webphone-noise" })
 bun install
 bun run build          # the example imports the built dist/, not src/ directly
 cp example/.env.example example/.env.local   # fill in real SIP credentials, or skip and use the on-page form
-bun run example:dev
+bun run example:dev    # relinks the package (see note below) before starting Vite
 ```
+
+**After every `bun run build`, re-run `bun run example:dev`** (it re-links
+automatically) rather than just refreshing the browser tab on an already-running
+dev server. tsup does a clean rebuild (deletes and recreates `dist/*`), which
+breaks the hardlink `bun install` set up for `example`'s `file:..` dependency on
+this package - the running dev server keeps serving the orphaned pre-rebuild
+content until the link is re-established. `bun run example:dev` runs `bun install`
+first specifically to avoid this trap; restarting the dev server *without* also
+re-running install will look like "my change had no effect" even though the build
+genuinely succeeded.
 
 ## Roadmap / status
 

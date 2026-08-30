@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { type DialerLabels, resolveLabels } from "../labels";
 import type { IncomingRingtonePreset, WebphoneRingtoneId } from "../../core/webphoneSounds";
 import DevicePicker from "./DevicePicker";
@@ -77,6 +77,43 @@ export default function AudioSettingsPanel({
   const [ringtoneMenuOpen, setRingtoneMenuOpen] = useState(false);
   const ringtoneMenuRef = useRef<HTMLDivElement | null>(null);
 
+  // Which way the panel opens relative to its trigger, decided by actually
+  // measuring available space rather than a fixed CSS breakpoint. A static
+  // "opens downward on desktop" rule (the source app's approach) silently
+  // overflows the viewport bottom whenever the trigger itself is near the
+  // bottom of the screen - the common case for this package, since the
+  // Dialer's default position is a bottom corner. Starts "up" (the safer
+  // default for a bottom-anchored pill) and flips to "down" only if there's
+  // more room that way.
+  const [openUpward, setOpenUpward] = useState(true);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    // The panel's own top/bottom CSS depends on the very state we're
+    // computing, so measure against `offsetParent` - the nearest
+    // *positioned* ancestor (the .relative trigger wrapper this is always
+    // rendered inside, per Dialer.tsx's usage), which CSS uses as the
+    // containing block for this panel's `position: absolute` regardless of
+    // how many unstyled wrapper divs (e.g. the .twp-root marker) sit in
+    // between. Using plain parentElement here would measure that wrapper
+    // instead, which is the wrong element. panelHeight is intrinsic and
+    // stable regardless of which way the panel currently opens.
+    const parentEl = el?.offsetParent;
+    if (!el || !parentEl) return;
+    const parentRect = parentEl.getBoundingClientRect();
+    const panelHeight = el.getBoundingClientRect().height;
+    const spaceAbove = parentRect.top;
+    const spaceBelow = window.innerHeight - parentRect.bottom;
+    const fitsAbove = panelHeight <= spaceAbove;
+    const fitsBelow = panelHeight <= spaceBelow;
+    // Prefer whichever direction actually fits; if neither does, keep
+    // "up" (matches this package's bottom-anchored default, and clips
+    // less content than opening down off a bottom-of-screen trigger would).
+    if (!fitsAbove && fitsBelow) setOpenUpward(false);
+    else if (fitsAbove) setOpenUpward(true);
+  }, []);
+
   useEffect(() => {
     if (!ringtoneMenuOpen) return;
     const onPointerDown = (event: MouseEvent | TouchEvent) => {
@@ -100,8 +137,11 @@ export default function AudioSettingsPanel({
     // placed inside (e.g. Dialer's own trigger wrapper).
     <div className="twp-root">
     <div
+      ref={panelRef}
       data-webphone-popup="audio"
-      className="absolute bottom-full left-1/2 top-auto z-[22000] mb-2 w-[420px] max-w-[calc(100vw-24px)] -translate-x-1/2 text-left sm:left-auto sm:right-0 sm:translate-x-0 md:bottom-auto md:top-full md:mb-0 md:mt-2"
+      className={`absolute right-0 z-[22000] w-[420px] max-w-[calc(100vw-24px)] text-left ${
+        openUpward ? "bottom-full mb-2" : "top-full mt-2"
+      }`}
     >
       <div className="overflow-visible rounded-[26px] border border-slate-200 bg-white p-3 shadow-[0_22px_56px_rgba(15,23,42,0.20)]">
         <div className="px-1 pb-3">

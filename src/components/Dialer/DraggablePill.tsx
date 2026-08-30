@@ -105,7 +105,8 @@ export default function DraggablePill({
     return () => cancelAnimationFrame(frame);
   }, [draggable, corner, applyFraction]);
 
-  // Re-clamp on resize so the pill can never end up stranded off-screen.
+  // Re-clamp whenever the *viewport* resizes, so the pill can never end up
+  // stranded off-screen if the window shrinks below where it currently sits.
   useEffect(() => {
     const onResize = () => {
       const el = containerRef.current;
@@ -117,6 +118,27 @@ export default function DraggablePill({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-clamps against latest `position` via the functional updater, doesn't need it as a dep
+  }, []);
+
+  // Re-clamp whenever *this element's own* rendered size changes - a
+  // right/bottom-anchored pill is positioned via a fixed left/top pixel
+  // offset, which doesn't automatically track content growth. Expanding
+  // the collapsed pill (adding buttons/text) grows it to the right; without
+  // this, a pill anchored near the right edge would render partially
+  // off-screen the moment it expanded, since "grow right" has nowhere to
+  // go there. ResizeObserver catches every size-changing cause (expand/
+  // collapse, a popup adding height, font-loading reflow), not just window
+  // resize.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(() => {
+      setPosition((prev) =>
+        prev ? clampToViewport(prev, { width: el.offsetWidth, height: el.offsetHeight }) : prev
+      );
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   const handlePointerDown = useCallback(

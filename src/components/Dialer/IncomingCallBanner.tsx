@@ -19,20 +19,20 @@ export default function IncomingCallBanner({
   const labels = resolveLabels(labelsOverride);
 
   return (
-    <div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-white py-2 pl-4 pr-2 shadow-[0_18px_44px_rgba(15,23,42,0.22)]">
-      <span className="flex h-8 w-8 shrink-0 animate-pulse items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-        <PhoneIcon size={15} />
+    <div className="flex w-72 items-center gap-2.5 rounded-2xl bg-slate-900 py-2 pl-2.5 pr-2 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+      <span className="flex h-9 w-9 shrink-0 animate-pulse items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+        <PhoneIcon size={16} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-slate-900">{labels.incomingCall}</p>
-        <p className="truncate text-[11px] text-slate-500">{callerLabel}</p>
+        <p className="truncate text-[13px] font-bold text-white">{labels.incomingCall}</p>
+        <p className="truncate text-[11px] text-slate-400">{callerLabel}</p>
       </div>
       <button
         type="button"
         onClick={onReject}
         aria-label={labels.reject}
         title={labels.reject}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white transition hover:bg-rose-600"
       >
         <PhoneHangupIcon size={16} />
       </button>
@@ -41,7 +41,7 @@ export default function IncomingCallBanner({
         onClick={onAnswer}
         aria-label={labels.answer}
         title={labels.answer}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-500 text-white transition hover:bg-emerald-600"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600"
       >
         <PhoneIcon size={16} />
       </button>

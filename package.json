@@ -34,7 +34,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:webrtc": "playwright test --config=playwright.webrtc.config.ts",
-    "example:dev": "cd example && bun run dev"
+    "example:dev": "bun install && cd example && bun run dev"
   },
   "peerDependencies": {
     "react": ">=18.0.0 <20.0.0",

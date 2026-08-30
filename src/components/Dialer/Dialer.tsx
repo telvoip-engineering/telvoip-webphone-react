@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import { useSip } from "../../context/SipContext";
 import { resolveLabels } from "../labels";
 import type { DialerProps } from "../types";
 import AudioSettingsPanel from "../primitives/AudioSettingsPanel";
-import ControlButton from "../primitives/ControlButton";
 import DialPad from "../primitives/DialPad";
 import TransferPad from "../primitives/TransferPad";
 import WrapUpCard from "../primitives/WrapUpCard";
@@ -23,6 +22,60 @@ const formatDuration = (seconds: number): string => {
   const secs = total % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
+
+/**
+ * Small circular icon button for the dark call-control bar - visually
+ * distinct from the light-themed ControlButton primitive (used inside the
+ * light popups: DialPad/TransferPad/AudioSettingsPanel/WrapUpCard), which
+ * intentionally keeps its own default light palette since it's also
+ * individually exported for consumers who want to reuse it standalone.
+ */
+function DarkIconButton({
+  active = false,
+  appearance = "default",
+  onClick,
+  title,
+  children,
+}: {
+  active?: boolean;
+  appearance?: "default" | "positive" | "destructive";
+  onClick?: (e?: ReactMouseEvent<HTMLButtonElement>) => void;
+  title?: string;
+  children: ReactNode;
+}) {
+  const palette =
+    appearance === "positive"
+      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+      : appearance === "destructive"
+        ? "bg-rose-500 text-white hover:bg-rose-600"
+        : active
+          ? "bg-white/20 text-white"
+          : "bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white";
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${palette}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Generic avatar circle - no photo to show, so a consistent colored initial/icon stands in for one. */
+function AvatarCircle({ label, size = 36 }: { label: string; size?: number }) {
+  const initial = /^[a-z]/i.test(label.trim()) ? label.trim()[0]!.toUpperCase() : null;
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-700 font-bold text-white"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
+    >
+      {initial ?? <PhoneIcon size={size * 0.45} />}
+    </div>
+  );
+}
 
 export default function Dialer({
   draggable = true,
@@ -138,88 +191,94 @@ export default function Dialer({
             labels={labelsOverride}
           />
         ) : callActive ? (
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1.5 pl-4 pr-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.18)]">
-            <div className="min-w-0 pr-1">
-              <p className="truncate text-[13px] font-bold text-slate-900">{remoteLabel}</p>
-              <p className="truncate text-[11px] tabular-nums text-slate-500">
-                {state?.onHold ? labels.hold : callStatusLabel}
-              </p>
+          <div className="flex w-72 flex-col gap-1.5">
+            {/* Top bar: identity + status + hangup, like a caller-ID card. */}
+            <div className="flex items-center gap-2.5 rounded-2xl bg-slate-900 py-2 pl-2.5 pr-2 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+              <AvatarCircle label={remoteLabel} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-bold text-white">{remoteLabel}</p>
+                <p className="truncate text-[11px] tabular-nums text-slate-400">
+                  {state?.onHold ? labels.hold : callStatusLabel}
+                </p>
+              </div>
+              <DarkIconButton appearance="destructive" onClick={() => actions?.hangup()} title={labels.hangup}>
+                <PhoneHangupIcon size={16} />
+              </DarkIconButton>
             </div>
-            <ControlButton
-              appearance="default"
-              active={Boolean(state?.muted)}
-              onClick={() => actions?.toggleMute()}
-              title={state?.muted ? labels.unmute : labels.mute}
-            >
-              {state?.muted ? <MicOffIcon size={15} /> : <MicIcon size={15} />}
-            </ControlButton>
-            {inCall ? (
-              <ControlButton
-                appearance="default"
-                active={Boolean(state?.onHold)}
-                onClick={() => actions?.toggleHold()}
-                title={state?.onHold ? labels.unhold : labels.hold}
+
+            {/* Bottom bar: in-call controls, icon-only. */}
+            <div className="relative flex items-center gap-1.5 rounded-2xl bg-slate-900 p-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+              <DarkIconButton
+                active={Boolean(state?.muted)}
+                onClick={() => actions?.toggleMute()}
+                title={state?.muted ? labels.unmute : labels.mute}
               >
-                <HoldIcon size={15} />
-              </ControlButton>
-            ) : null}
-            <ControlButton
-              appearance="default"
-              active={dialPadOpen}
-              onClick={(event) => {
-                if (dialPadOpen) {
-                  setDialPadOpen(false);
-                } else {
-                  openDialPadAt(event?.currentTarget ?? null);
-                }
-              }}
-              title={labels.keypad}
-            >
-              <DialpadIcon size={15} />
-            </ControlButton>
-            {inCall ? (
-              <ControlButton
-                appearance="default"
-                active={transferOpen}
-                onClick={() => setTransferOpen((open) => !open)}
-                title={labels.transfer}
+                {state?.muted ? <MicOffIcon size={15} /> : <MicIcon size={15} />}
+              </DarkIconButton>
+              {inCall ? (
+                <DarkIconButton
+                  active={Boolean(state?.onHold)}
+                  onClick={() => actions?.toggleHold()}
+                  title={state?.onHold ? labels.unhold : labels.hold}
+                >
+                  <HoldIcon size={15} />
+                </DarkIconButton>
+              ) : null}
+              <DarkIconButton
+                active={dialPadOpen}
+                onClick={(event) => {
+                  if (dialPadOpen) {
+                    setDialPadOpen(false);
+                  } else {
+                    openDialPadAt(event?.currentTarget ?? null);
+                  }
+                }}
+                title={labels.keypad}
               >
-                <TransferIcon size={15} />
-              </ControlButton>
-            ) : null}
-            <ControlButton
-              appearance="default"
-              active={!state?.speakerEnabled}
-              onClick={() => actions?.toggleSpeaker()}
-              title={state?.speakerEnabled ? labels.speaker : labels.speakerMuted}
-            >
-              {state?.speakerEnabled ? <VolumeIcon size={15} /> : <VolumeOffIcon size={15} />}
-            </ControlButton>
-            {pip.supported ? (
-              <ControlButton appearance="default" onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
-                <PipIcon size={15} />
-              </ControlButton>
-            ) : null}
-            <ControlButton appearance="destructive" onClick={() => actions?.hangup()} title={labels.hangup}>
-              <PhoneHangupIcon size={15} />
-            </ControlButton>
+                <DialpadIcon size={15} />
+              </DarkIconButton>
+              {inCall ? (
+                <DarkIconButton
+                  active={transferOpen}
+                  onClick={() => setTransferOpen((open) => !open)}
+                  title={labels.transfer}
+                >
+                  <TransferIcon size={15} />
+                </DarkIconButton>
+              ) : null}
+              <DarkIconButton
+                active={!state?.speakerEnabled}
+                onClick={() => actions?.toggleSpeaker()}
+                title={state?.speakerEnabled ? labels.speaker : labels.speakerMuted}
+              >
+                {state?.speakerEnabled ? <VolumeIcon size={15} /> : <VolumeOffIcon size={15} />}
+              </DarkIconButton>
+              {pip.supported ? (
+                <DarkIconButton onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
+                  <PipIcon size={15} />
+                </DarkIconButton>
+              ) : null}
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-slate-900"
+              />
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white p-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.18)]">
+          <div className="relative flex items-center gap-1.5 rounded-2xl bg-slate-900 p-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              className="flex items-center gap-2 rounded-full px-2.5 py-1 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-100"
+              className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[12px] font-semibold text-white transition hover:bg-white/10"
             >
               <span
-                className={`h-2 w-2 rounded-full ${state?.registered ? "bg-emerald-500" : "bg-slate-300"}`}
+                className={`h-2 w-2 rounded-full ${state?.registered ? "bg-emerald-500" : "bg-slate-500"}`}
               />
               {expanded ? registrationLabel : <PhoneIcon size={15} />}
             </button>
             {expanded ? (
               <>
-                <ControlButton
-                  appearance="default"
+                <DarkIconButton
                   active={dialPadOpen}
                   onClick={(event) => {
                     if (dialPadOpen) {
@@ -231,16 +290,15 @@ export default function Dialer({
                   title={labels.keypad}
                 >
                   <DialpadIcon size={15} />
-                </ControlButton>
+                </DarkIconButton>
                 <div className="relative">
-                  <ControlButton
-                    appearance="default"
+                  <DarkIconButton
                     active={settingsOpen}
                     onClick={() => setSettingsOpen((open) => !open)}
                     title={labels.settings}
                   >
                     <SettingsIcon size={15} />
-                  </ControlButton>
+                  </DarkIconButton>
                   {settingsOpen ? (
                     <AudioSettingsPanel
                       micLevel={0}
@@ -283,12 +341,16 @@ export default function Dialer({
                   ) : null}
                 </div>
                 {pip.supported ? (
-                  <ControlButton appearance="default" onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
+                  <DarkIconButton onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
                     <PipIcon size={15} />
-                  </ControlButton>
+                  </DarkIconButton>
                 ) : null}
               </>
             ) : null}
+            <span
+              aria-hidden="true"
+              className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full ring-2 ring-slate-900 ${state?.registered ? "bg-emerald-500" : "bg-slate-500"}`}
+            />
           </div>
         )}
       </div>

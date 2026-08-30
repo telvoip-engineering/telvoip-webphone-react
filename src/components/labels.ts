@@ -20,12 +20,14 @@ export interface DialerLabels {
   hangup: string;
   answer: string;
   reject: string;
+  callInProgress: string;
   transfer: string;
   keypad: string;
   settings: string;
   speaker: string;
   speakerMuted: string;
   incomingCall: string;
+  incomingCallStatus: string;
   unknownCaller: string;
   callConnecting: string;
   callRinging: string;
@@ -71,14 +73,16 @@ export const DEFAULT_DIALER_LABELS: DialerLabels = {
   hold: "Hold",
   unhold: "Resume",
   hangup: "Hang up",
-  answer: "Answer",
-  reject: "Decline",
+  answer: "Accept",
+  reject: "Reject",
+  callInProgress: "Call in progress",
   transfer: "Transfer",
   keypad: "Keypad",
   settings: "Settings",
   speaker: "Speaker",
   speakerMuted: "Speaker muted",
   incomingCall: "Incoming call",
+  incomingCallStatus: "is now calling…",
   unknownCaller: "Unknown caller",
   callConnecting: "Connecting…",
   callRinging: "Ringing…",

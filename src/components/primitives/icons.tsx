@@ -159,6 +159,13 @@ export const PipIcon = ({ size = 16, className }: IconProps) => (
   </svg>
 );
 
+export const BellIcon = ({ size = 16, className }: IconProps) => (
+  <svg width={size} height={size} className={className} {...base} fill="currentColor" stroke="none">
+    <path d="M12 2a6 6 0 0 0-6 6v3.2c0 .6-.2 1.2-.6 1.7L4 15h16l-1.4-2.1a2.8 2.8 0 0 1-.6-1.7V8a6 6 0 0 0-6-6Z" />
+    <path d="M9.5 18a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
+  </svg>
+);
+
 export const DragHandleIcon = ({ size = 16, className }: IconProps) => (
   <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="currentColor">
     {[7, 12, 17].flatMap((cx) => [8, 16].map((cy) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={1.5} />))}

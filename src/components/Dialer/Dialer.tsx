@@ -45,9 +45,9 @@ function DarkIconButton({
 }) {
   const palette =
     appearance === "positive"
-      ? "bg-emerald-500 text-white hover:bg-emerald-600"
+      ? "bg-teal-500 text-white hover:bg-teal-600"
       : appearance === "destructive"
-        ? "bg-rose-500 text-white hover:bg-rose-600"
+        ? "bg-[#f0604a] text-white hover:bg-[#dd4f3a]"
         : active
           ? "bg-white/20 text-white"
           : "bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white";
@@ -65,11 +65,11 @@ function DarkIconButton({
 }
 
 /** Generic avatar circle - no photo to show, so a consistent colored initial/icon stands in for one. */
-function AvatarCircle({ label, size = 36 }: { label: string; size?: number }) {
+function AvatarCircle({ label, size = 36, ringActive = false }: { label: string; size?: number; ringActive?: boolean }) {
   const initial = /^[a-z]/i.test(label.trim()) ? label.trim()[0]!.toUpperCase() : null;
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-700 font-bold text-white"
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-700 font-bold text-white ${ringActive ? "ring-2 ring-teal-400 ring-offset-2 ring-offset-slate-900" : ""}`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {initial ?? <PhoneIcon size={size * 0.45} />}
@@ -167,7 +167,7 @@ export default function Dialer({
 
   const callStatusLabel =
     callStatus === "in-call"
-      ? formatDuration(state?.duration ?? 0)
+      ? `${labels.callInProgress} ${formatDuration(state?.duration ?? 0)}`
       : callStatus === "dialing"
         ? labels.callConnecting
         : callStatus === "ringing"
@@ -194,7 +194,7 @@ export default function Dialer({
           <div className="flex w-72 flex-col gap-1.5">
             {/* Top bar: identity + status + hangup, like a caller-ID card. */}
             <div className="flex items-center gap-2.5 rounded-2xl bg-slate-900 py-2 pl-2.5 pr-2 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
-              <AvatarCircle label={remoteLabel} />
+              <AvatarCircle label={remoteLabel} ringActive={inCall && !state?.onHold} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-bold text-white">{remoteLabel}</p>
                 <p className="truncate text-[11px] tabular-nums text-slate-400">

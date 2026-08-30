@@ -42,7 +42,8 @@
   },
   "dependencies": {
     "@sapphi-red/web-noise-suppressor": "^0.3.5",
-    "jssip": "3.13.8"
+    "jssip": "3.13.8",
+    "libphonenumber-js": "^1.13.6"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^15.0.0",

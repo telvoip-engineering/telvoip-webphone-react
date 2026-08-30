@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { SipProvider, useSip, type SipCredentialsInput } from "../context/SipContext";
 import { hasStunIceServer } from "../core/iceConfig";
+import type { DialTargetFormat } from "../core/dialTarget";
+import type { DialTargetFormatter } from "../core/dialTarget";
+import type { CountryCode } from "libphonenumber-js/min";
 
 // A generic, well-known public STUN server - NOT Telvoip's own infrastructure
 // (the source app defaults to its own TURN server, which would be
@@ -16,6 +19,9 @@ export interface WebphoneProviderProps {
   children: ReactNode;
   onCallSummary?: (summary: unknown) => void | Promise<void>;
   onRegistrationFailed?: (cause?: unknown) => void;
+  dialTargetFormat?: DialTargetFormat;
+  defaultCallingCountry?: CountryCode;
+  formatDialTarget?: DialTargetFormatter;
 }
 
 /**
@@ -30,6 +36,9 @@ export default function WebphoneProvider({
   children,
   onCallSummary,
   onRegistrationFailed,
+  dialTargetFormat,
+  defaultCallingCountry,
+  formatDialTarget,
 }: WebphoneProviderProps) {
   const resolvedCredentials = useMemo<SipCredentialsInput>(
     () => ({
@@ -46,6 +55,9 @@ export default function WebphoneProvider({
       credentials={resolvedCredentials}
       onCallSummary={onCallSummary}
       onRegistrationFailed={onRegistrationFailed}
+      dialTargetFormat={dialTargetFormat}
+      defaultCallingCountry={defaultCallingCountry}
+      formatDialTarget={formatDialTarget}
     >
       <WebphoneAudioBridge />
       {children}

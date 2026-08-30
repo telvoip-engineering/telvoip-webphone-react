@@ -9,6 +9,8 @@
 //   for partial reuse.
 
 export { default as useSIPClient } from "./core/useSIPClient";
+export { createDialTargetFormatter, formatDialTarget, toDialTargetInput } from "./core/dialTarget";
+export type { DialTargetFormat, DialTargetFormatter, DialTargetInput } from "./core/dialTarget";
 export type {
   AvailableDevice,
   AvailableDevices,

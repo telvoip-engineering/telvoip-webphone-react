@@ -92,7 +92,7 @@ type Contact = {
 };
 
 const CONTACTS: Contact[] = [
-  { id: 1, name: "Amanda Henderson", company: "Brightside Studio", phone: "+254 712 345 678", email: "amanda@brightside.test", status: "Customer" },
+  { id: 1, name: "Amanda Henderson", company: "Brightside Studio", phone: "+254 710 127 370", email: "amanda@brightside.test", status: "Customer" },
   { id: 2, name: "David Kimani", company: "Northstar Logistics", phone: "+254 722 481 903", email: "david@northstar.test", status: "Lead" },
   { id: 3, name: "Nia Wanjiku", company: "Nia & Co.", phone: "+254 733 105 224", email: "nia@niaco.test", status: "Trial" },
   { id: 4, name: "Paul Otieno", company: "Kijani Foods", phone: "+254 701 892 451", email: "paul@kijani.test", status: "Customer" },
@@ -106,7 +106,9 @@ function CallButton({ phone, compact = false }: { phone: string; compact?: boole
     if (!actions || calling) return;
     setCalling(true);
     try {
-      await actions.startCall(phone.replace(/\s/g, ""));
+      // The provider owns the dial plan, so every CRM/ERP call button can
+      // pass its display number through untouched.
+      await actions.startCall(phone);
     } finally {
       setCalling(false);
     }
@@ -124,7 +126,7 @@ function CallButton({ phone, compact = false }: { phone: string; compact?: boole
         border: 0,
         borderRadius: 8,
         padding: compact ? "7px 10px" : "9px 13px",
-        background: "#0f766e",
+        background: "#14b8a6",
         color: "white",
         fontSize: 12,
         fontWeight: 650,
@@ -184,6 +186,10 @@ export default function App() {
   );
   const [draggable, setDraggable] = useState(true);
   const [corner, setCorner] = useState<Corner>("bottom-right");
+  const [outboundDids, setOutboundDids] = useState([
+    { id: "primary", number: "+254 710 127 370", label: "Main line", selected: true },
+    { id: "sales", number: "+254 711 555 201", label: "Sales", selected: false },
+  ]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa" }}>
@@ -227,10 +233,23 @@ export default function App() {
       {credentials ? (
         <WebphoneProvider
           credentials={credentials}
+          dialTargetFormat="national"
+          defaultCallingCountry="KE"
           onRegistrationFailed={(cause) => console.warn("Registration failed:", cause)}
         >
           <ContactsWorkspace />
-          <Dialer draggable={draggable} corner={corner} />
+          <Dialer
+            draggable={draggable}
+            corner={corner}
+            outboundDids={outboundDids}
+            onOutboundDidSelect={async (did) => {
+              // In a real integration, persist this through the Developers
+              // API client, then refresh the list from that same client.
+              setOutboundDids((previous) =>
+                previous.map((item) => ({ ...item, selected: item.id === did.id }))
+              );
+            }}
+          />
         </WebphoneProvider>
       ) : (
         <CredentialsForm onSubmit={setCredentials} />

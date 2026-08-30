@@ -65,6 +65,14 @@ import {
 import { canSendRtpDtmf, setOutgoingAudioEnabled } from "./sipCallControl";
 import { bindIceNetworkAdvisories } from "./iceNetworkAdvisory";
 import { minimizeSdpCandidates } from "./minimizeSdpCandidates";
+import {
+  createDialTargetFormatter,
+  toDialTargetInput,
+  type DialTargetFormat,
+  type DialTargetFormatter,
+  type DialTargetInput,
+} from "./dialTarget";
+import type { CountryCode } from "libphonenumber-js/min";
 
 // --- Call state and identity types ---
 export type SipCallStateValue =
@@ -127,6 +135,12 @@ export interface UseSIPClientOptions {
    * on the first load per page - see resolveNoiseSuppressionAssetBaseUrl.
    */
   noiseSuppressionAssetBaseUrl?: string;
+  /** Built-in formatting policy applied to every outbound call. Default "preserve". */
+  dialTargetFormat?: DialTargetFormat;
+  /** ISO 3166-1 alpha-2 country used for local numbers without a country. */
+  defaultCallingCountry?: CountryCode;
+  /** Custom dial plan transform. Overrides dialTargetFormat when provided. */
+  formatDialTarget?: DialTargetFormatter;
 }
 
 // --- Device and diagnostics types ---
@@ -190,7 +204,7 @@ export interface UseSIPClientReturn {
   refreshDevices: () => Promise<void>;
   selectInputDevice: (deviceId: string | null) => Promise<void>;
   selectOutputDevice: (deviceId: string | null) => Promise<void>;
-  makeCall: (target: string) => Promise<void>;
+  makeCall: (target: string | DialTargetInput) => Promise<void>;
   endCall: () => void;
   answerCall: () => Promise<void>;
   rejectCall: () => void;
@@ -964,6 +978,9 @@ export default function useSIPClient(
     sessionTimersForceRefresher: sessionTimersForceRefresherOption,
     noiseSuppressionEnabled: noiseSuppressionEnabledOption,
     noiseSuppressionAssetBaseUrl,
+    dialTargetFormat: dialTargetFormatOption,
+    defaultCallingCountry: defaultCallingCountryOption,
+    formatDialTarget: formatDialTargetOption,
   } = options;
   // Frozen at first mount, matching the original module-level-constant
   // semantics (these feed UA/session config built once per registration
@@ -986,6 +1003,10 @@ export default function useSIPClient(
   // call's base URL per page load anyway (see its docstring) - freezing here
   // just keeps this option consistent with its siblings above.
   const NOISE_SUPPRESSION_ASSET_BASE_URL = useRef(noiseSuppressionAssetBaseUrl).current;
+  const DIAL_TARGET_FORMATTER = useRef(
+    formatDialTargetOption ||
+      createDialTargetFormatter(dialTargetFormatOption ?? "preserve", defaultCallingCountryOption)
+  ).current;
   const uaRef = useRef<JsSIPUA | null>(null);
   const iceServersRef = useRef(iceServers);
   const iceTransportPolicyRef = useRef(iceTransportPolicy);
@@ -3916,7 +3937,7 @@ export default function useSIPClient(
   }, [password, setRegistrationEnabled, uri, wsUri]);
 
   const makeCall = useCallback(
-    async (target: string) => {
+    async (target: string | DialTargetInput) => {
       const ua = uaRef.current;
       if (!ua) {
         throw new Error("SIP client not initialised.");
@@ -3940,7 +3961,8 @@ export default function useSIPClient(
         throw new Error("A call is already in progress.");
       }
 
-      const sipUri = ensureSipUri(target, downstreamDomain);
+      const formattedTarget = DIAL_TARGET_FORMATTER(toDialTargetInput(target));
+      const sipUri = ensureSipUri(formattedTarget, downstreamDomain);
       if (!sipUri) {
         throw new Error("Invalid target for outbound call.");
       }
@@ -3959,7 +3981,7 @@ export default function useSIPClient(
           id: session.id,
           state: CALL_STATES.DIALING,
           direction: "outgoing",
-          remote: { uri: sipUri, displayName: target },
+          remote: { uri: sipUri, displayName: toDialTargetInput(target).number },
           muted: false,
           onHold: false,
           duration: 0,
@@ -3981,6 +4003,7 @@ export default function useSIPClient(
       }
     },
     [
+      DIAL_TARGET_FORMATTER,
       createCallOptionsWithAudio,
       deviceError,
       downstreamDomain,

@@ -319,7 +319,10 @@ export default function Dialer({
           <div className="relative flex items-center gap-1 rounded-2xl border border-white/10 bg-[#202831] p-1.5">
             <button
               type="button"
-              onClick={(event) => openDialPadAt(event.currentTarget)}
+              onClick={(event) => {
+                if (dialPadOpen) setDialPadOpen(false);
+                else openDialPadAt(event.currentTarget);
+              }}
               title={labels.call}
               aria-label={labels.call}
               className="flex h-11 w-11 items-center justify-center rounded-xl text-white transition hover:bg-white/[0.07]"

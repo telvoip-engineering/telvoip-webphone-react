@@ -29,9 +29,18 @@ export const SipProvider = ({
   children,
   onCallSummary,
   onRegistrationFailed,
+  dialTargetFormat,
+  defaultCallingCountry,
+  formatDialTarget,
 }: SipProviderProps) => {
   const normalized = useMemo(() => normalizeCredentials(credentials), [credentials]);
-  const sip = useSIPClient(normalized || {}, { onCallSummary, onRegistrationFailed });
+  const sip = useSIPClient(normalized || {}, {
+    onCallSummary,
+    onRegistrationFailed,
+    dialTargetFormat,
+    defaultCallingCountry,
+    formatDialTarget,
+  });
 
   // useSIPClient returns a fresh object every render, so anything derived from
   // `sip` directly is unstable. Route actions through a ref so the actions

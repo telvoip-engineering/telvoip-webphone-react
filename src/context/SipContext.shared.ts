@@ -3,6 +3,9 @@
 import { createContext, type ReactNode } from "react";
 import type { WebphoneRingtoneId, WebphoneSoundPreferences } from "../core/webphoneSounds";
 import type { UseSIPClientReturn } from "../core/useSIPClient";
+import type { DialTargetFormat } from "../core/dialTarget";
+import type { DialTargetFormatter, DialTargetInput } from "../core/dialTarget";
+import type { CountryCode } from "libphonenumber-js/min";
 
 // --- Credentials types ---
 export interface SipCredentialsInput {
@@ -95,7 +98,7 @@ export interface SipActions {
   selectInputDevice: (deviceId: string | null) => Promise<void>;
   selectOutputDevice: (deviceId: string | null) => Promise<void>;
   reconnect: () => void;
-  startCall: (target: string) => Promise<void>;
+  startCall: (target: string | DialTargetInput) => Promise<void>;
   hangup: () => void;
   answer: () => Promise<void>;
   reject: () => void;
@@ -277,4 +280,9 @@ export interface SipProviderProps {
   children: ReactNode;
   onCallSummary?: (summary: unknown) => void | Promise<void>;
   onRegistrationFailed?: (cause?: unknown) => void;
+  /** Apply a built-in dialing policy to all startCall calls. */
+  dialTargetFormat?: DialTargetFormat;
+  defaultCallingCountry?: CountryCode;
+  /** Custom dial plan transform; takes precedence over dialTargetFormat. */
+  formatDialTarget?: DialTargetFormatter;
 }

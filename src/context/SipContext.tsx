@@ -62,6 +62,7 @@ export const SipProvider = ({
       resumeCallTones: () => sipRef.current.resumeCallTones(),
       setIncomingRingtone: (id) => sipRef.current.setIncomingRingtone(id),
       previewIncomingRingtone: (id) => sipRef.current.previewIncomingRingtone(id),
+      testSpeaker: () => sipRef.current.testSpeaker(),
       registerAudioElement: (element) => sipRef.current.registerAudioElement(element),
       startSelfTest: () => sipRef.current.startSelfTest(),
       stopSelfTest: (reason) => sipRef.current.stopSelfTest(reason),

@@ -58,6 +58,12 @@ export interface DialerLabels {
   audioOutputUnsupported: string;
   audioTestSpeaker: string;
   audioTestingSpeaker: string;
+  audioTestMicrophone: string;
+  audioTestingMicrophone: string;
+  audioMicrophoneTestHint: string;
+  outboundDid: string;
+  outboundDidDescription: string;
+  outboundDidNone: string;
   wrapUpEndedCall: string;
 }
 
@@ -113,6 +119,12 @@ export const DEFAULT_DIALER_LABELS: DialerLabels = {
   audioOutputUnsupported: "Your browser doesn't support choosing an output device.",
   audioTestSpeaker: "Test speaker",
   audioTestingSpeaker: "Playing…",
+  audioTestMicrophone: "Test microphone",
+  audioTestingMicrophone: "Listening…",
+  audioMicrophoneTestHint: "Speak normally; your microphone will play through your selected speaker for six seconds.",
+  outboundDid: "Outbound caller ID",
+  outboundDidDescription: "Choose the number shown when you place a call.",
+  outboundDidNone: "No outbound caller ID selected",
   wrapUpEndedCall: "Call ended",
 };
 

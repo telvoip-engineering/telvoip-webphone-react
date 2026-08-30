@@ -10,6 +10,7 @@ import {
   HOLD_TONE_PATTERN,
   readWebphoneSoundPreferences,
   RINGBACK_TONE_PATTERN,
+  SPEAKER_TEST_PATTERN,
   type SoundPattern,
   type WebphoneRingtoneId,
   type WebphoneSoundPreferences,
@@ -202,6 +203,8 @@ export interface UseSIPClientReturn {
   resumeCallTones: () => Promise<void>;
   setIncomingRingtone: (id: WebphoneRingtoneId) => void;
   previewIncomingRingtone: (id: WebphoneRingtoneId) => Promise<void>;
+  /** Play a short test tone through the current browser audio output. */
+  testSpeaker: () => void;
   reconnect: () => void;
   registerAudioElement: (element: HTMLAudioElement | null) => void;
   diagnostics: DiagnosticsState;
@@ -1593,6 +1596,11 @@ export default function useSIPClient(
     },
     [startTonePattern, stopTone]
   );
+
+  const testSpeaker = useCallback(() => {
+    stopTone(previewToneRef);
+    startTonePattern(previewToneRef, SPEAKER_TEST_PATTERN, { loop: false });
+  }, [startTonePattern, stopTone]);
 
   const refreshDevices = useCallback(async () => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) {
@@ -5080,6 +5088,7 @@ export default function useSIPClient(
     resumeCallTones,
     setIncomingRingtone,
     previewIncomingRingtone,
+    testSpeaker,
     reconnect,
     registerAudioElement,
     diagnostics: diagnosticsState,

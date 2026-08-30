@@ -20,8 +20,11 @@ const readStoredFraction = (): FractionalPosition | null => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<FractionalPosition>;
-    if (typeof parsed.fx !== "number" || typeof parsed.fy !== "number") return null;
-    return { fx: parsed.fx, fy: parsed.fy };
+    const { fx, fy } = parsed;
+    if (typeof fx !== "number" || typeof fy !== "number" || !Number.isFinite(fx) || !Number.isFinite(fy)) {
+      return null;
+    }
+    return { fx, fy };
   } catch {
     return null;
   }
@@ -99,6 +102,8 @@ export default function DraggablePill({
   // that window without a magic timeout.
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
+      // Stored coordinates are only a convenience. A malformed/obsolete
+      // value must never win over the requested default corner.
       const fraction = (draggable && readStoredFraction()) || CORNER_DEFAULTS[corner];
       applyFraction(fraction);
     });

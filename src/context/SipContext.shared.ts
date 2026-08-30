@@ -108,6 +108,7 @@ export interface SipActions {
   resumeCallTones: () => Promise<void>;
   setIncomingRingtone: (id: WebphoneRingtoneId) => void;
   previewIncomingRingtone: (id: WebphoneRingtoneId) => Promise<void>;
+  testSpeaker: () => void;
   registerAudioElement: (element: HTMLAudioElement | null) => void;
   startSelfTest: () => Promise<{ ok: boolean; reason?: string; error?: string }>;
   stopSelfTest: (reason?: string) => void;

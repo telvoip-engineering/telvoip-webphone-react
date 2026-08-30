@@ -92,6 +92,7 @@ export * from "./components/primitives/icons";
 export type {
   ControlButtonAppearance,
   DialerProps,
+  OutboundDid,
   TransferTarget,
   WrapUpCallSummary,
 } from "./components/types";

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
+import { useCallback, useEffect, useState, type ReactNode, type MouseEvent as ReactMouseEvent } from "react";
 import { useSip } from "../../context/SipContext";
 import { resolveLabels } from "../labels";
-import type { DialerProps } from "../types";
+import type { DialerProps, OutboundDid } from "../types";
 import AudioSettingsPanel from "../primitives/AudioSettingsPanel";
 import DialPad from "../primitives/DialPad";
 import TransferPad from "../primitives/TransferPad";
@@ -24,11 +24,7 @@ const formatDuration = (seconds: number): string => {
 };
 
 /**
- * Small circular icon button for the dark call-control bar - visually
- * distinct from the light-themed ControlButton primitive (used inside the
- * light popups: DialPad/TransferPad/AudioSettingsPanel/WrapUpCard), which
- * intentionally keeps its own default light palette since it's also
- * individually exported for consumers who want to reuse it standalone.
+ * Flat square control shared by every dark webphone surface.
  */
 function DarkIconButton({
   active = false,
@@ -45,22 +41,54 @@ function DarkIconButton({
 }) {
   const palette =
     appearance === "positive"
-      ? "bg-teal-500 text-white hover:bg-teal-600"
+      ? "bg-teal-500 text-white hover:bg-teal-400"
       : appearance === "destructive"
         ? "bg-[#f0604a] text-white hover:bg-[#dd4f3a]"
         : active
-          ? "bg-white/20 text-white"
-          : "bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white";
+          ? "bg-white/10 text-white"
+          : "bg-transparent text-slate-300 hover:bg-white/[0.07] hover:text-white";
   return (
     <button
       type="button"
       title={title}
       aria-label={title}
       onClick={onClick}
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${palette}`}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300/60 ${palette}`}
     >
       {children}
     </button>
+  );
+}
+
+function SettingsModal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return createPortal(
+    <div className="twp-root">
+      <div
+        className="fixed inset-0 z-[22000] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <section
+          role="dialog"
+          aria-modal="true"
+          aria-label="Audio settings"
+          className="max-h-[calc(100vh-32px)] w-full max-w-[460px] overflow-y-auto rounded-2xl"
+        >
+          {children}
+        </section>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -69,7 +97,7 @@ function AvatarCircle({ label, size = 36, ringActive = false }: { label: string;
   const initial = /^[a-z]/i.test(label.trim()) ? label.trim()[0]!.toUpperCase() : null;
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-700 font-bold text-white ${ringActive ? "ring-2 ring-teal-400 ring-offset-2 ring-offset-slate-900" : ""}`}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-slate-700 font-bold text-white ${ringActive ? "border-2 border-teal-400" : ""}`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
       {initial ?? <PhoneIcon size={size * 0.45} />}
@@ -84,6 +112,9 @@ export default function Dialer({
   onTransferSearch,
   transferCandidates,
   transferCandidatesLoading,
+  outboundDids,
+  onOutboundDidSelect,
+  outboundDidSelecting,
   className,
 }: DialerProps) {
   const sip = useSip();
@@ -91,7 +122,6 @@ export default function Dialer({
   const state = sip?.state;
   const actions = sip?.actions;
 
-  const [expanded, setExpanded] = useState(false);
   const [dialPadOpen, setDialPadOpen] = useState(false);
   const [dialPadCoords, setDialPadCoords] = useState({ top: 0, left: 0 });
   const [dialInput, setDialInput] = useState("");
@@ -103,6 +133,7 @@ export default function Dialer({
   const [audioDeviceMenu, setAudioDeviceMenu] = useState<"input" | "output" | null>(null);
   const [deviceSelecting, setDeviceSelecting] = useState<"input" | "output" | null>(null);
   const [speakerTestPlaying, setSpeakerTestPlaying] = useState(false);
+  const [microphoneTestRunning, setMicrophoneTestRunning] = useState(false);
 
   const callStatus = state?.callStatus ?? "idle";
   const hasPendingCall = state?.pendingCallStatus === "incoming";
@@ -154,16 +185,29 @@ export default function Dialer({
     [actions]
   );
 
+  const handleOutboundDidSelect = useCallback(
+    async (did: OutboundDid) => {
+      if (!onOutboundDidSelect) return;
+      await onOutboundDidSelect(did);
+    },
+    [onOutboundDidSelect]
+  );
+
+  const handleMicrophoneTest = useCallback(async () => {
+    if (!actions) return;
+    setMicrophoneTestRunning(true);
+    try {
+      await actions.startSelfTest();
+    } finally {
+      // The client stops its loopback test after six seconds.
+      window.setTimeout(() => setMicrophoneTestRunning(false), 6_100);
+    }
+  }, [actions]);
+
   if (!sip) return null;
 
   const remote = hasPendingCall ? state?.pendingCallRemote : state?.remoteIdentity;
   const remoteLabel = remote?.displayName || remote?.uri || labels.unknownCaller;
-
-  const registrationLabel = state?.registering
-    ? labels.registering
-    : state?.registered
-      ? labels.registered
-      : labels.unregistered;
 
   const callStatusLabel =
     callStatus === "in-call"
@@ -193,7 +237,7 @@ export default function Dialer({
         ) : callActive ? (
           <div className="flex w-72 flex-col gap-1.5">
             {/* Top bar: identity + status + hangup, like a caller-ID card. */}
-            <div className="flex items-center gap-2.5 rounded-2xl bg-slate-900 py-2 pl-2.5 pr-2 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-[#202831] py-2 pl-2.5 pr-2">
               <AvatarCircle label={remoteLabel} ringActive={inCall && !state?.onHold} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-bold text-white">{remoteLabel}</p>
@@ -207,7 +251,7 @@ export default function Dialer({
             </div>
 
             {/* Bottom bar: in-call controls, icon-only. */}
-            <div className="relative flex items-center gap-1.5 rounded-2xl bg-slate-900 p-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+            <div className="relative flex items-center gap-1 rounded-2xl border border-white/10 bg-[#202831] p-1.5">
               <DarkIconButton
                 active={Boolean(state?.muted)}
                 onClick={() => actions?.toggleMute()}
@@ -253,6 +297,13 @@ export default function Dialer({
               >
                 {state?.speakerEnabled ? <VolumeIcon size={15} /> : <VolumeOffIcon size={15} />}
               </DarkIconButton>
+              <DarkIconButton
+                active={settingsOpen}
+                onClick={() => setSettingsOpen(true)}
+                title={labels.settings}
+              >
+                <SettingsIcon size={15} />
+              </DarkIconButton>
               {pip.supported ? (
                 <DarkIconButton onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
                   <PipIcon size={15} />
@@ -265,42 +316,38 @@ export default function Dialer({
             </div>
           </div>
         ) : (
-          <div className="relative flex items-center gap-1.5 rounded-2xl bg-slate-900 p-1.5 shadow-[0_18px_44px_rgba(15,23,42,0.35)]">
+          <div className="relative flex items-center gap-1 rounded-2xl border border-white/10 bg-[#202831] p-1.5">
             <button
               type="button"
-              onClick={() => setExpanded((value) => !value)}
-              className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[12px] font-semibold text-white transition hover:bg-white/10"
+              onClick={(event) => openDialPadAt(event.currentTarget)}
+              title={labels.call}
+              aria-label={labels.call}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-white transition hover:bg-white/[0.07]"
             >
               <span
-                className={`h-2 w-2 rounded-full ${state?.registered ? "bg-emerald-500" : "bg-slate-500"}`}
+                className={`absolute right-1 top-1 h-2.5 w-2.5 rounded-full ring-2 ring-slate-900 ${state?.registered ? "bg-emerald-500" : "bg-slate-500"}`}
               />
-              {expanded ? registrationLabel : <PhoneIcon size={15} />}
+              <PhoneIcon size={18} />
             </button>
-            {expanded ? (
-              <>
-                <DarkIconButton
-                  active={dialPadOpen}
-                  onClick={(event) => {
-                    if (dialPadOpen) {
-                      setDialPadOpen(false);
-                    } else {
-                      openDialPadAt(event?.currentTarget ?? null);
-                    }
-                  }}
-                  title={labels.keypad}
-                >
-                  <DialpadIcon size={15} />
-                </DarkIconButton>
-                <div className="relative">
-                  <DarkIconButton
-                    active={settingsOpen}
-                    onClick={() => setSettingsOpen((open) => !open)}
-                    title={labels.settings}
-                  >
-                    <SettingsIcon size={15} />
-                  </DarkIconButton>
-                  {settingsOpen ? (
-                    <AudioSettingsPanel
+            <DarkIconButton
+              active={settingsOpen}
+              onClick={() => setSettingsOpen(true)}
+              title={labels.settings}
+            >
+              <SettingsIcon size={17} />
+            </DarkIconButton>
+            {pip.supported ? (
+              <DarkIconButton onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
+                <PipIcon size={15} />
+              </DarkIconButton>
+            ) : null}
+          </div>
+        )}
+        {settingsOpen ? (
+          <SettingsModal onClose={() => setSettingsOpen(false)}>
+            <AudioSettingsPanel
+                      modal
+                      onClose={() => setSettingsOpen(false)}
                       micLevel={0}
                       selectedInputId={state?.selectedInputDeviceId || ""}
                       selectedInputLabel={
@@ -327,8 +374,14 @@ export default function Dialer({
                       onOutputDeviceSelect={handleDeviceSelect("output")}
                       onSpeakerTest={() => {
                         setSpeakerTestPlaying(true);
-                        window.setTimeout(() => setSpeakerTestPlaying(false), 900);
+                        actions?.testSpeaker();
+                        window.setTimeout(() => setSpeakerTestPlaying(false), 1_000);
                       }}
+                      microphoneTestRunning={microphoneTestRunning}
+                      onMicrophoneTest={() => void handleMicrophoneTest()}
+                      outboundDids={outboundDids}
+                      onOutboundDidSelect={handleOutboundDidSelect}
+                      outboundDidSelecting={outboundDidSelecting}
                       noiseSuppressionEnabled={state?.noiseSuppressionEnabled}
                       noiseSuppressionAvailable={state?.noiseSuppressionAvailable}
                       onNoiseSuppressionChange={actions?.setNoiseSuppression}
@@ -338,21 +391,8 @@ export default function Dialer({
                       onAudioDeviceMenuClose={() => setAudioDeviceMenu(null)}
                       labels={labelsOverride}
                     />
-                  ) : null}
-                </div>
-                {pip.supported ? (
-                  <DarkIconButton onClick={() => void pip.openPip()} title={labels.pictureInPicture}>
-                    <PipIcon size={15} />
-                  </DarkIconButton>
-                ) : null}
-              </>
-            ) : null}
-            <span
-              aria-hidden="true"
-              className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full ring-2 ring-slate-900 ${state?.registered ? "bg-emerald-500" : "bg-slate-500"}`}
-            />
-          </div>
-        )}
+          </SettingsModal>
+        ) : null}
       </div>
 
       {dialPadOpen ? (

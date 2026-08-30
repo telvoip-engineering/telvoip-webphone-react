@@ -61,17 +61,17 @@ export default function DialPad({
     <div className="twp-root">
       <div
         data-webphone-popup="dialpad"
-        className="pointer-events-auto fixed z-[22000] w-72 rounded-2xl border border-slate-200 bg-white p-3 text-slate-800 shadow-[0_24px_60px_rgba(15,23,42,0.25)] ring-1 ring-slate-100"
+        className="pointer-events-auto fixed z-[22000] w-72 rounded-2xl border border-white/10 bg-[#202831] p-3 text-white"
         style={{ top, left }}
       >
         {inCallMode ? (
-        <div className="mb-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-medium text-slate-100">
           <span className="truncate">{dialInput || labels.dtmfPlaceholder}</span>
           {dialInput ? (
             <button
               type="button"
               onClick={onBackspace}
-              className="ml-auto text-slate-500 hover:text-primary"
+              className="ml-auto text-slate-400 hover:text-white"
               aria-label={labels.backspace}
             >
               <BackspaceIcon size={16} />
@@ -79,19 +79,19 @@ export default function DialPad({
           ) : null}
         </div>
       ) : (
-        <div className="mb-3 flex items-center gap-2 rounded-xl bg-white p-2 shadow-[inset_0_0_0_1px_rgba(226,232,240,0.9)]">
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] p-2">
           <input
             type="text"
             aria-label={labels.dialPlaceholder}
             value={dialInput}
             onChange={(event) => onInputChange(event.target.value.slice(0, 64))}
             placeholder={labels.dialPlaceholder}
-            className="w-full border-0 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            className="w-full border-0 bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
           />
           <button
             type="button"
             onClick={onClearInput}
-            className={`flex h-7 w-7 items-center justify-center bg-white text-slate-500 transition hover:text-slate-700 ${dialInput ? "" : "invisible"}`}
+            className={`flex h-7 w-7 items-center justify-center text-slate-400 transition hover:text-white ${dialInput ? "" : "invisible"}`}
             aria-label={labels.clear}
           >
             <CloseIcon size={16} />
@@ -117,7 +117,7 @@ export default function DialPad({
                 onDigit(digit);
               }}
               aria-label={digit === "backspace" ? labels.backspace : undefined}
-              className="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-base font-semibold text-slate-700 transition hover:border-primary hover:text-primary"
+              className="flex h-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-base font-medium text-slate-100 transition hover:bg-white/[0.09]"
             >
               {digit === "backspace" ? <BackspaceIcon size={18} /> : digit}
             </button>
@@ -129,7 +129,7 @@ export default function DialPad({
         <button
           type="button"
           onClick={onClose}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.1]"
         >
           <CloseIcon size={16} />
           {labels.closeDtmf}
@@ -139,7 +139,7 @@ export default function DialPad({
           type="button"
           onClick={onCall}
           disabled={!dialInput}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <PhoneIcon size={16} />
           {labels.call}
